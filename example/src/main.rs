@@ -26,7 +26,7 @@ async fn main() -> Result<(), Error> {
     let _sodium = api.get_project("AANobbMI").await?;
 
     // Now lets get the versions that the Sodium mod has
-    let sodium_versions = api.list_versions("AANobbMI").await?;
+    let sodium_versions = api.list_versions("AANobbMI", None).await?;
 
     // The versions are sorted chronologically so the first element should be the latest one
     let latest_version = &sodium_versions[0];

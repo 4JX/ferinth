@@ -86,3 +86,20 @@ pub enum DependencyType {
     Optional,
     Incompatible,
 }
+
+// Filters for requests to "list_versions"
+pub struct ListVersionsParams {
+    /// The modloader(s) the versions should support
+    pub loaders: Option<ModLoader>,
+
+    /// The suppored minecraft versions
+    pub game_versions: Option<Vec<String>>,
+
+    /// Whether to only show featured / non-featured versions
+    pub featured: Option<bool>,
+}
+
+pub enum ModLoader {
+    Forge,
+    Fabric,
+}

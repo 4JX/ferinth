@@ -14,24 +14,50 @@ impl Ferinth {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), ferinth::Error> {
     /// # let modrinth = ferinth::Ferinth::new("ferinth-example");
-    /// let sodium_versions = modrinth.list_versions("AANobbMI").await?;
+    /// let sodium_versions = modrinth.list_versions("AANobbMI", None).await?;
     /// assert!(sodium_versions[0].project_id == "AANobbMI");
     /// # Ok(()) }
     /// ```
-    pub async fn list_versions(&self, project_id: &str) -> Result<Vec<Version>> {
+    pub async fn list_versions(
+        &self,
+        project_id: &str,
+        query_params: Option<ListVersionsParams>,
+    ) -> Result<Vec<Version>> {
         check_id_slug(project_id)?;
+
         let mut project_id = project_id.to_string();
         project_id.push('/');
-        Ok(request(
-            self,
-            API_URL_BASE
-                .join("project/")?
-                .join(&project_id)?
-                .join("version")?,
-        )
-        .await?
-        .json()
-        .await?)
+
+        let mut base_url = API_URL_BASE
+            .join("project/")?
+            .join(&project_id)?
+            .join("version")?;
+
+        if let Some(params) = query_params {
+            if let Some(loader) = params.loaders {
+                base_url.query_pairs_mut().append_pair(
+                    "loaders",
+                    match loader {
+                        ModLoader::Forge => "[\"forge\"]",
+                        ModLoader::Fabric => "[\"fabric\"]",
+                    },
+                );
+            }
+
+            if let Some(versions) = params.game_versions {
+                base_url
+                    .query_pairs_mut()
+                    .append_pair("game_versions", format!("{:?}", versions).as_str());
+            }
+
+            if let Some(featured) = params.featured {
+                base_url
+                    .query_pairs_mut()
+                    .append_pair("featured", format!("{:?}", featured).as_str());
+            }
+        }
+
+        Ok(request(self, base_url).await?.json().await?)
     }
 
     /// Get version with ID `version_id`
