@@ -69,7 +69,7 @@ pub struct Dependency {
     pub dependency_type: DependencyType,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum VersionType {
     Alpha,
@@ -77,10 +77,28 @@ pub enum VersionType {
     Release,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum DependencyType {
     Required,
     Optional,
     Incompatible,
+}
+
+// Filters for requests to "list_versions"
+pub struct ListVersionsParams {
+    /// The modloader(s) the versions should support
+    pub loaders: Option<Vec<ModLoader>>,
+
+    /// The suppored minecraft versions
+    pub game_versions: Option<Vec<String>>,
+
+    /// Whether to only show featured / non-featured versions
+    pub featured: Option<bool>,
+}
+
+#[derive(Debug)]
+pub enum ModLoader {
+    Forge,
+    Fabric,
 }
