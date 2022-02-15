@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::{Ferinth, Result};
 use reqwest::{header::USER_AGENT, IntoUrl, Response, Url};
 
@@ -12,5 +14,19 @@ pub(crate) async fn request(client: &Ferinth, url: impl IntoUrl) -> Result<Respo
         .get(url)
         .header(USER_AGENT, &client.user_agent);
 
-    Ok(request.send().await?.error_for_status()?)
+    let sent_request = request.send().await?.error_for_status()?;
+
+    if let Some(requests_left) = sent_request.headers().get("x-ratelimit-limit") {
+        if requests_left.to_str().unwrap().parse().unwrap_or(0) <= 1 {
+            if let Some(sleep_for_sec) = sent_request.headers().get("x-ratelimit-reset") {
+                dbg!(&sleep_for_sec);
+
+                std::thread::sleep(Duration::from_secs(
+                    sleep_for_sec.to_str().unwrap().parse().unwrap_or(60),
+                ));
+            }
+        }
+    }
+
+    Ok(sent_request)
 }
