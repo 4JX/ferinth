@@ -1,7 +1,7 @@
 use crate::{
     api_calls::{check_id_slug, check_sha1_hash},
     request::{request, API_URL_BASE},
-    structures::version_structs::*,
+    structures::{version_structs::*, ModLoader},
     Ferinth, Result,
 };
 use bytes::Bytes;
@@ -14,22 +14,43 @@ impl Ferinth {
     /// # #[tokio::main]
     /// # async fn main() -> Result<(), ferinth::Error> {
     /// # let modrinth = ferinth::Ferinth::new();
-    /// let sodium_versions = modrinth.list_versions("AANobbMI").await?;
+    /// let sodium_versions = modrinth.list_versions("AANobbMI", None).await?;
     /// assert!(sodium_versions[0].project_id == "AANobbMI");
     /// # Ok(()) }
     /// ```
-    pub async fn list_versions(&self, project_id: &str) -> Result<Vec<Version>> {
+    pub async fn list_versions(
+        &self,
+        project_id: &str,
+        query_params: Option<ListVersionsParams>,
+    ) -> Result<Vec<Version>> {
         check_id_slug(project_id)?;
-        Ok(request(
-            self,
-            API_URL_BASE
-                .join("project/")?
-                .join(&format!("{}/", project_id))?
-                .join("version")?,
-        )
-        .await?
-        .json()
-        .await?)
+
+        let mut base_url = API_URL_BASE
+            .join("project/")?
+            .join(&format!("{}/", project_id))?
+            .join("version")?;
+
+        if let Some(params) = query_params {
+            if let Some(loaders) = params.loaders {
+                base_url
+                    .query_pairs_mut()
+                    .append_pair("loaders", &format!("{:?}", loaders.into_iter().map(|e| e.0.to_lowercase()).collect::<Vec<String>>()));
+            }
+
+            if let Some(versions) = params.game_versions {
+                base_url
+                    .query_pairs_mut()
+                    .append_pair("game_versions", &format!("{:?}", versions));
+            }
+
+            if let Some(featured) = params.featured {
+                base_url
+                    .query_pairs_mut()
+                    .append_pair("featured", &format!("{:?}", featured));
+            }
+        }
+
+        Ok(request(self, base_url).await?.json().await?)
     }
 
     /// Get version with ID `version_id`
@@ -92,4 +113,16 @@ impl Ferinth {
     pub async fn download_version_file(&self, version_file: &VersionFile) -> Result<Bytes> {
         Ok(request(self, &version_file.url).await?.bytes().await?)
     }
+}
+
+// Filters for requests to "list_versions"
+pub struct ListVersionsParams {
+    /// The modloader(s) the versions should support
+    pub loaders: Option<Vec<ModLoader>>,
+
+    /// The suppored minecraft versions
+    pub game_versions: Option<Vec<String>>,
+
+    /// Whether to only show featured / non-featured versions
+    pub featured: Option<bool>,
 }

@@ -69,7 +69,7 @@ pub struct Dependency {
     pub dependency_type: DependencyType,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq, Eq, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum VersionType {
     Alpha,
@@ -77,7 +77,7 @@ pub enum VersionType {
     Release,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum DependencyType {
     Required,

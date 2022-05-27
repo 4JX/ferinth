@@ -20,6 +20,7 @@
 mod api_calls;
 mod request;
 pub mod structures;
+pub use api_calls::version_calls::ListVersionsParams;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
